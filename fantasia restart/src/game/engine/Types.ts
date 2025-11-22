@@ -61,6 +61,7 @@ export interface GameState {
   buildQueue: BuildQueueItem[];
   // Dodatkowe pole pomocnicze do timingu 30s
   secondsInPhase: number;
+  seed: string; // ← DODAJ TO
 }
 
 // Pomocnicze: tworzenie obiektu Resources
