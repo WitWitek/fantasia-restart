@@ -1,7 +1,10 @@
 // src/game/engine/GameEngine.ts
-import type { GameState, Phase } from "../types";
-import { endOfSimulationPhase } from "../logic";
 
+import { endOfSimulationPhase } from "./logic";
+import type { GameState, Phase } from "./types";
+import { INITIAL_GAME_STATE ,BuildingType} from "./types";
+import { seedParser } from "./seedParser";
+import { Worker, GraphicObject } from "./GraphicsClasses";
 type EngineCallbacks = {
   onGameStateChange: (state: GameState) => void;
   onPhaseChange: (phase: Phase) => void;
@@ -11,20 +14,38 @@ export class GameEngine {
   private ctx: CanvasRenderingContext2D;
   private gameState!: GameState;
   private phase: Phase = "freeze";
-
+private workers: Worker[] = [];
   private callbacks: EngineCallbacks;
   private rafId: number | null = null;
-
+	private data:any;
+	private currentBuilding:BuildingType;
   // symulacja 30s
   private simStartTime: number | null = null;
   private SIMULATION_DURATION = 30000; // 30 sekund
 
   constructor(canvas: HTMLCanvasElement, callbacks: EngineCallbacks) {
+	 
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Brak context2d w canvasie.");
-
-    this.ctx = ctx;
-    this.callbacks = callbacks;
+	 this.callbacks = callbacks; 
+this.gameState = INITIAL_GAME_STATE;
+this.data = seedParser(this.gameState.seed);
+const hq = this.data.objects.hq;
+const last = this.gameState.buildQueue[this.gameState.buildQueue.length - 1];
+this.currentBuilding = last ? last.buildingType : "farm";
+for (const w of this.gameState.workers) {
+  this.workers.push(
+    new Worker(
+      hq.x + 100,
+      hq.y,
+      50,
+      50,
+      "worker",
+      this.gameState.seed,
+      w.role
+    )
+  );
+}
 
     this.loop = this.loop.bind(this);
     this.startLoop();
@@ -71,13 +92,35 @@ export class GameEngine {
    * UPDATE — logika 30-sekundowej tury
    ************************************************************* */
   private update(timestamp: number) {
+	  
     if (this.phase !== "simulation") return;
 
     if (this.simStartTime === null) this.simStartTime = timestamp;
 
     const elapsed = timestamp - this.simStartTime;
-
-    
+	
+	
+const last = this.gameState.buildQueue[this.gameState.buildQueue.length - 1];
+this.currentBuilding = last ? last.buildingType : this.currentBuilding;
+	const buildingString=this.currentBuilding;
+if(elapsed>0&&elapsed<5000){
+	
+	for(const worker of this.workers){
+		worker.multipleAi(3,{name:buildingString})
+	}
+}
+    if(elapsed>10000&&elapsed<20000){
+	
+	for(const worker of this.workers){
+		worker.multipleAi(3,{name:buildingString})
+	}
+}
+if(elapsed>25000&&elapsed<30000){
+	
+	for(const worker of this.workers){
+		worker.multipleAi(3,{name:buildingString})
+	}
+}
     // 0–5 ruch workerów + item spawns
     // 5–15 produkcja animacyjna
     // 15–20 przejście do placu budowy
@@ -109,11 +152,15 @@ export class GameEngine {
 
     // HQ placeholder
     ctx.fillStyle = "#444";
-    ctx.fillRect(350, 180, 100, 100);
+ctx.fillRect(this.data.objects.hq.x - 25, this.data.objects.hq.y - 25, 50, 50);
 
     ctx.fillStyle = "#ddd";
     ctx.font = "16px sans-serif";
-    ctx.fillText("HQ", 385, 235);
+    ctx.fillText("HQ", this.data.objects.hq.x, this.data.objects.hq.y);
+//workersi
+
+for(const w of this.workers)w.draw(ctx);
+
 
     // Faza
     ctx.fillStyle = "white";
