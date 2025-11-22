@@ -105,7 +105,8 @@ export function seedParser(seed: string): SeedObject[] {
   }
 
     return {
-    objects: [hq, wood, stone, fruits, clay],
+    objects: {hq, wood, stone, fruits, clay},
     layout,
   };
 }
+
