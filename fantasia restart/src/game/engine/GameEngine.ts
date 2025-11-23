@@ -2,9 +2,10 @@
 
 import { endOfSimulationPhase } from "./logic";
 import type { GameState, Phase } from "./types";
-import { INITIAL_GAME_STATE ,BuildingType} from "./types";
+import { INITIAL_GAME_STATE } from "./types";
+import type{BuildingType} from "./types"
 import { seedParser } from "./seedParser";
-import { Worker, GraphicObject } from "./GraphicsClasses";
+import { Worker, GraphicObject ,FlyingResource  } from "./GraphicClasses";
 type EngineCallbacks = {
   onGameStateChange: (state: GameState) => void;
   onPhaseChange: (phase: Phase) => void;
@@ -28,7 +29,10 @@ private workers: Worker[] = [];
 	private stone:GraphicObject;
 	private fruits:GraphicObject;
 	private clay:GraphicObject;
-	
+	private hqImage:GraphicObject;
+	private cameraX:number;
+	private cameraY:number;
+	private flyingResources: FlyingResource[] = [];
   constructor(canvas: HTMLCanvasElement, callbacks: EngineCallbacks) {
 	 
     const ctx = canvas.getContext("2d");
@@ -38,6 +42,8 @@ private workers: Worker[] = [];
 this.gameState = INITIAL_GAME_STATE;
 this.data = seedParser(this.gameState.seed);
 const hq = this.data.objects.hq;
+this.cameraX=0;
+this.cameraY=0;
 const last = this.gameState.buildQueue[this.gameState.buildQueue.length - 1];
 this.currentBuilding = last ? last.buildingType : "farm";
 for (const w of this.gameState.workers) {
@@ -58,7 +64,7 @@ for (const w of this.gameState.workers) {
 this.stone = new GraphicObject(this.data.objects.stone.x, this.data.objects.stone.y, 25, 25, "stone");
 this.fruits = new GraphicObject(this.data.objects.fruits.x, this.data.objects.fruits.y, 25, 25, "fruits");
 this.clay = new GraphicObject(this.data.objects.clay.x, this.data.objects.clay.y, 25, 25, "clay");
-
+this.hqImage=new GraphicObject(this.data.objects.hq.x, this.data.objects.hq.y, 25, 25, "hq");
 	
     this.loop = this.loop.bind(this);
     this.startLoop();
@@ -132,6 +138,64 @@ if(elapsed>0&&elapsed<5000){
 		worker.aiMovement({ name: buildingString }, dt, "gather");
 	}
 }
+if(elapsed>15000&&elapsed<20000){
+	  if (Math.random() < 0.1) {
+    this.flyingResources.push(
+      new FlyingResource(
+        this.data.objects.wood.x,
+        this.data.objects.wood.y,
+        10,
+        10,
+        "wood",      // klucz do GFX albo fallback
+        this.hqImage.x,
+        this.hqImage.y,
+        30          // prędkość px/s
+      )
+    );
+  }
+    if (Math.random() < 0.1) {
+    this.flyingResources.push(
+      new FlyingResource(
+        this.data.objects.stone.x,
+        this.data.objects.stone.y,
+        10,
+        10,
+        "stone",      // klucz do GFX albo fallback
+        this.hqImage.x,
+        this.hqImage.y,
+        30          // prędkość px/s
+      )
+    );
+  }
+    if (Math.random() < 0.1) {
+    this.flyingResources.push(
+      new FlyingResource(
+        this.data.objects.fruits.x,
+        this.data.objects.fruits.y,
+        10,
+        10,
+        "fruits",      // klucz do GFX albo fallback
+        this.hqImage.x,
+        this.hqImage.y,
+        30          // prędkość px/s
+      )
+    );
+  }
+    if (Math.random() < 0.1) {
+    this.flyingResources.push(
+      new FlyingResource(
+        this.data.objects.clay.x,
+        this.data.objects.clay.y,
+        10,
+        10,
+        "clay",      // klucz do GFX albo fallback
+        this.hqImage.x,
+        this.hqImage.y,
+        30          // prędkość px/s
+      )
+    );
+  }
+}
 if(elapsed>20000&&elapsed<25000){
 	
 	for(const worker of this.workers){
@@ -153,6 +217,14 @@ if(elapsed>20000&&elapsed<25000){
 
       this.simStartTime = null; // reset
     }
+	
+	
+	for (const r of this.flyingResources) {
+  r.update(dt, this.hqImage.x, this.hqImage.y);
+}
+
+// czyścimy martwe (które dotarły do HQ)
+this.flyingResources = this.flyingResources.filter((r) => r.alive);
   }
 
   /** ************************************************************
@@ -165,7 +237,7 @@ if(elapsed>20000&&elapsed<25000){
 
     // Tło
     ctx.fillStyle = "rgb(18,18,18)";
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    //ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     // HQ placeholder
     ctx.fillStyle = "#444";
@@ -176,13 +248,17 @@ ctx.fillRect(this.data.objects.hq.x - 25, this.data.objects.hq.y - 25, 50, 50);
     ctx.fillText("HQ", this.data.objects.hq.x, this.data.objects.hq.y);
 //workersi
 
-for(const w of this.workers)w.draw(ctx);
+for(const w of this.workers)w.draw(ctx,this.cameraX,this.cameraY);
 
 //nody
-this.wood.draw(ctx);
-this.stone.draw(ctx);
-this.fruits.draw(ctx);
-this.clay.draw(ctx);
+this.wood.draw(ctx,this.cameraX,this.cameraY);
+this.stone.draw(ctx,this.cameraX,this.cameraY);
+this.fruits.draw(ctx,this.cameraX,this.cameraY);
+this.clay.draw(ctx,this.cameraX,this.cameraY);
+
+for (const r of this.flyingResources) {
+  r.draw(ctx,this.cameraX,this.cameraY);
+}
     // Faza
     ctx.fillStyle = "white";
     ctx.font = "14px monospace";
