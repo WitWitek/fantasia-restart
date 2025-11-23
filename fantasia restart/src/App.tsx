@@ -32,7 +32,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col md:flex-row">
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center" style={{
+        backgroundImage: `url('/src/graphics/canvasBackground.png')`,
+        backgroundSize: "cover",      // albo "contain"
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center bottom", // trójkąt będzie „siedział” na dole
+      }}>
         <GameCanvas
           gameState={gameState}
           phase={phase}
