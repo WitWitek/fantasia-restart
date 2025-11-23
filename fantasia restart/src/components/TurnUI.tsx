@@ -1,11 +1,12 @@
 // src/components/TurnUI.tsx
 import { useMemo, useState } from "react";
-import {
+import type {
   BuildingType,
   GameState,
   Phase,
   WorkerRole,
-} from "../game/types";
+} from "../game/engine/Types";
+
 
 import type { PlayerChoices } from "../game/logic";
 
