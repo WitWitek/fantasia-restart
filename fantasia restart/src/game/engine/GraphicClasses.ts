@@ -6,7 +6,10 @@ import type{WorkerRole} from "./Types";
 export const GFX: Record<string, HTMLImageElement> = {
   worker: loadImage("../../../graphics/worker.png"),
   hq: loadImage("../../../graphics/hq.png"),
-  tree: loadImage("../../../graphics/tree.png"),
+  wood: loadImage("../../../graphics/wood.png"),
+  stone : loadImage("../../../graphics/stone.png"),
+    fruits: loadImage("../../../graphics/fruits.png"),
+	 clay: loadImage("../../../graphics/clay.png"),
 };
 
 function loadImage(src: string): HTMLImageElement {
@@ -29,9 +32,16 @@ public graphics: HTMLImageElement | undefined;
 		this.h=h;
 		this.graphics=GFX[src];
 	}
-	draw(ctx: CanvasRenderingContext2D){
-		  if (!this.graphics) return;
-		ctx.drawImage(this.graphics,this.x,this.y,this.w,this.h);
+	draw(ctx: CanvasRenderingContext2D,cameraX:number,cameraY:number){
+		    if (!this.graphics || !this.graphics.complete) {
+    // placeholder – kolorowy kwadrat zamiast obrazka
+    ctx.fillStyle = "#ff00ff";
+    ctx.fillRect(this.x+cameraX, this.y+cameraY, this.w, this.h);
+    return;
+  }
+    ctx.fillStyle = "#ff00ff";
+    ctx.fillRect(this.x+cameraX, this.y+cameraY, this.w, this.h);
+		//ctx.drawImage(this.graphics,this.x,this.y,this.w,this.h);
 	}
 }
 export class Worker extends GraphicObject{
@@ -130,4 +140,49 @@ export class Worker extends GraphicObject{
 		
 	}
 	
+}
+export class FlyingResource extends GraphicObject {
+  public vx: number;
+  public vy: number;
+  public alive: boolean = true;
+
+  constructor(
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    src: string,
+    targetX: number,
+    targetY: number,
+    speed: number
+  ) {
+    super(x, y, w, h, src);
+
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+    const nx = dx / dist;
+    const ny = dy / dist;
+
+    this.vx = nx * speed;
+    this.vy = ny * speed;
+  }
+
+  update(dt: number, targetX: number, targetY: number) {
+    if (!this.alive) return;
+
+    const dx = targetX - this.x;
+    const dy = targetY - this.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // dotarło do HQ
+    if (dist < 4) {
+      this.alive = false;
+      return;
+    }
+
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+  }
 }
