@@ -1,9 +1,10 @@
 // src/game/engine/GameEngine.ts
 
 import { endOfSimulationPhase } from "./logic";
+import { GameFactions } from "./Factions";
 import type { GameState, Phase } from "./types";
 import { INITIAL_GAME_STATE } from "./types";
-import type{BuildingType} from "./types"
+import type{BuildingType,WorkerRole} from "./types"
 import { seedParser } from "./seedParser";
 import { Worker, GraphicObject ,FlyingResource  } from "./GraphicClasses";
 type EngineCallbacks = {
@@ -15,7 +16,8 @@ export class GameEngine {
   private ctx: CanvasRenderingContext2D;
   private gameState!: GameState;
   private phase: Phase = "freeze";
-private workers: Worker[] = [];
+private cameraX: number = 0;
+private cameraY: number = 0;
   private callbacks: EngineCallbacks;
   private rafId: number | null = null;
 	private data:any;
@@ -25,14 +27,7 @@ private workers: Worker[] = [];
   private lastTimestamp: number = performance.now();
 
   private SIMULATION_DURATION = 30000; // 30 sekund
-	private wood:GraphicObject;
-	private stone:GraphicObject;
-	private fruits:GraphicObject;
-	private clay:GraphicObject;
-	private hqImage:GraphicObject;
-	private cameraX:number;
-	private cameraY:number;
-	private flyingResources: FlyingResource[] = [];
+	private factions:GameFactions;
   constructor(canvas: HTMLCanvasElement, callbacks: EngineCallbacks) {
 	 
     const ctx = canvas.getContext("2d");
@@ -40,32 +35,27 @@ private workers: Worker[] = [];
 	this.ctx = ctx;
 	 this.callbacks = callbacks; 
 this.gameState = INITIAL_GAME_STATE;
-this.data = seedParser(this.gameState.seed);
-const hq = this.data.objects.hq;
-this.cameraX=0;
-this.cameraY=0;
+
+
+const currentWorkers: { id:number, role:string }[] = [];
+for(let w of this.gameState.workers){
+	currentWorkers.push(w);
+}
+
+
+this.factions=new GameFactions(this.gameState.seed,currentWorkers)
+for (let f of this.factions.factions){
+	for(let w of f.workers){
+		w.x=f.hq.x+100;
+		w.y=f.hq.y;
+	}
+}
+
+
+
 const last = this.gameState.buildQueue[this.gameState.buildQueue.length - 1];
 this.currentBuilding = last ? last.buildingType : "farm";
-for (const w of this.gameState.workers) {
-  this.workers.push(
-    new Worker(
-      hq.x + 100,
-      hq.y,
-      50,
-      50,
-      "worker",
-      this.gameState.seed,
-      w.role
-    )
-	
-  );
-}
-	this.wood = new GraphicObject(this.data.objects.wood.x, this.data.objects.wood.y, 25, 25, "wood");
-this.stone = new GraphicObject(this.data.objects.stone.x, this.data.objects.stone.y, 25, 25, "stone");
-this.fruits = new GraphicObject(this.data.objects.fruits.x, this.data.objects.fruits.y, 25, 25, "fruits");
-this.clay = new GraphicObject(this.data.objects.clay.x, this.data.objects.clay.y, 25, 25, "clay");
-this.hqImage=new GraphicObject(this.data.objects.hq.x, this.data.objects.hq.y, 25, 25, "hq");
-	
+
     this.loop = this.loop.bind(this);
     this.startLoop();
   }
@@ -88,6 +78,9 @@ this.hqImage=new GraphicObject(this.data.objects.hq.x, this.data.objects.hq.y, 2
   /** Start pętli animacji */
   private startLoop() {
     if (this.rafId != null) return;
+	for(let f of this.factions.factions){
+		if(f.ai)f.choosingAI();
+	}
     this.rafId = requestAnimationFrame(this.loop);
   }
 
@@ -126,90 +119,16 @@ this.hqImage=new GraphicObject(this.data.objects.hq.x, this.data.objects.hq.y, 2
 const last = this.gameState.buildQueue[this.gameState.buildQueue.length - 1];
 this.currentBuilding = last ? last.buildingType : this.currentBuilding;
 	const buildingString=this.currentBuilding;
-if(elapsed>0&&elapsed<5000){
-	
-	for(const worker of this.workers){
-		worker.aiMovement({ name: buildingString }, dt, "hq");
-	}
-}
-    if(elapsed>10000&&elapsed<15000){
-	
-	for(const worker of this.workers){
-		worker.aiMovement({ name: buildingString }, dt, "gather");
-	}
-}
-if(elapsed>15000&&elapsed<20000){
-	  if (Math.random() < 0.1) {
-    this.flyingResources.push(
-      new FlyingResource(
-        this.data.objects.wood.x,
-        this.data.objects.wood.y,
-        10,
-        10,
-        "wood",      // klucz do GFX albo fallback
-        this.hqImage.x,
-        this.hqImage.y,
-        30          // prędkość px/s
-      )
-    );
-  }
-    if (Math.random() < 0.1) {
-    this.flyingResources.push(
-      new FlyingResource(
-        this.data.objects.stone.x,
-        this.data.objects.stone.y,
-        10,
-        10,
-        "stone",      // klucz do GFX albo fallback
-        this.hqImage.x,
-        this.hqImage.y,
-        30          // prędkość px/s
-      )
-    );
-  }
-    if (Math.random() < 0.1) {
-    this.flyingResources.push(
-      new FlyingResource(
-        this.data.objects.fruits.x,
-        this.data.objects.fruits.y,
-        10,
-        10,
-        "fruits",      // klucz do GFX albo fallback
-        this.hqImage.x,
-        this.hqImage.y,
-        30          // prędkość px/s
-      )
-    );
-  }
-    if (Math.random() < 0.1) {
-    this.flyingResources.push(
-      new FlyingResource(
-        this.data.objects.clay.x,
-        this.data.objects.clay.y,
-        10,
-        10,
-        "clay",      // klucz do GFX albo fallback
-        this.hqImage.x,
-        this.hqImage.y,
-        30          // prędkość px/s
-      )
-    );
+for (let f of this.factions.factions) {
+  if (f.ai) {
+    // AI frakcji używa swojego losowego budynku
+    f.allAI(f.actualBuilding, dt, elapsed);
+  } else {
+    // frakcja gracza używa budynku z kolejki
+    f.allAI({ name: this.currentBuilding }, dt, elapsed);
   }
 }
-if(elapsed>20000&&elapsed<25000){
-	
-	for(const worker of this.workers){
-		worker.aiMovement({ name: buildingString }, dt, "building");
-	}
-}
-    // 0–5 ruch workerów + item spawns
-    // 5–15 produkcja animacyjna
-    // 15–20 przejście do placu budowy
-    // 20–30 budowa
-    // (placeholder — łatwe do rozbudowy)
-
-    // koniec 30-sekundowej tury
-    if (elapsed >= this.SIMULATION_DURATION) {
+  if (elapsed >= this.SIMULATION_DURATION) {
       const newState = endOfSimulationPhase(this.gameState);
 
       this.callbacks.onGameStateChange(newState);
@@ -217,14 +136,6 @@ if(elapsed>20000&&elapsed<25000){
 
       this.simStartTime = null; // reset
     }
-	
-	
-	for (const r of this.flyingResources) {
-  r.update(dt, this.hqImage.x, this.hqImage.y);
-}
-
-// czyścimy martwe (które dotarły do HQ)
-this.flyingResources = this.flyingResources.filter((r) => r.alive);
   }
 
   /** ************************************************************
@@ -238,27 +149,21 @@ this.flyingResources = this.flyingResources.filter((r) => r.alive);
     // Tło
     ctx.fillStyle = "rgb(18,18,18)";
     //ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
+	
     // HQ placeholder
     ctx.fillStyle = "#444";
-ctx.fillRect(this.data.objects.hq.x - 25, this.data.objects.hq.y - 25, 50, 50);
-
+//ctx.fillRect(this.data.objects.hq.x - 25, this.data.objects.hq.y - 25, 50, 50);
+	for(let f of this.factions.factions)f.drawEverything(ctx,this.cameraX,this.cameraY);
     ctx.fillStyle = "#ddd";
     ctx.font = "16px sans-serif";
-    ctx.fillText("HQ", this.data.objects.hq.x, this.data.objects.hq.y);
+    
 //workersi
 
-for(const w of this.workers)w.draw(ctx,this.cameraX,this.cameraY);
 
 //nody
-this.wood.draw(ctx,this.cameraX,this.cameraY);
-this.stone.draw(ctx,this.cameraX,this.cameraY);
-this.fruits.draw(ctx,this.cameraX,this.cameraY);
-this.clay.draw(ctx,this.cameraX,this.cameraY);
 
-for (const r of this.flyingResources) {
-  r.draw(ctx,this.cameraX,this.cameraY);
-}
+
+
     // Faza
     ctx.fillStyle = "white";
     ctx.font = "14px monospace";
