@@ -28,6 +28,8 @@ private cameraY: number = 0;
 
   private SIMULATION_DURATION = 30000; // 30 sekund
 	private factions:GameFactions;
+	private goldNode:GraphicObject;
+	private magicCrystal:GraphicObject;
   constructor(canvas: HTMLCanvasElement, callbacks: EngineCallbacks) {
 	 
     const ctx = canvas.getContext("2d");
@@ -35,12 +37,11 @@ private cameraY: number = 0;
 	this.ctx = ctx;
 	 this.callbacks = callbacks; 
 this.gameState = INITIAL_GAME_STATE;
+this.goldNode=new GraphicObject(335,300,25,25,"gold");
+this.magicCrystal=new GraphicObject(365,300,25,25,"crystal");
 
+const currentWorkers: { id:number, role:string }[] = this.gameState.workers;
 
-const currentWorkers: { id:number, role:string }[] = [];
-for(let w of this.gameState.workers){
-	currentWorkers.push(w);
-}
 
 
 this.factions=new GameFactions(this.gameState.seed,currentWorkers)
@@ -69,6 +70,7 @@ this.currentBuilding = last ? last.buildingType : "farm";
   setPhase(phase: Phase) {
     // wchodzimy w symulację
     if (phase === "simulation" && this.phase !== "simulation") {
+		this.syncPlayerWorkers();
       this.simStartTime = performance.now();
     }
 
@@ -77,6 +79,14 @@ this.currentBuilding = last ? last.buildingType : "farm";
 
   /** Start pętli animacji */
   private startLoop() {
+	  
+const currentWorkers: { id:number, role:string }[] = this.gameState.workers;
+let activeWorkers:Worker[]=[];
+for(const w of currentWorkers){
+	activeWorkers.push(new Worker(this.factions.factions[0].hq.x+100,this.factions.factions[0].hq.y,25,25,"worker",this.factions.factions[0].seed,w.role));
+}
+  this.factions.factions[0].workers=activeWorkers;
+  console.log('workersi ',this.factions.factions[0].workers,this.factions.factions[1].workers);
     if (this.rafId != null) return;
 	for(let f of this.factions.factions){
 		if(f.ai)f.choosingAI();
@@ -107,6 +117,24 @@ this.currentBuilding = last ? last.buildingType : "farm";
   /** ************************************************************
    * UPDATE — logika 30-sekundowej tury
    ************************************************************* */
+private syncPlayerWorkers() {
+  const base = this.factions.factions[0];
+  const workersFromState = this.gameState.workers;
+
+  base.workers = workersFromState.map(
+    w => new Worker(
+      base.hq.x + 100,
+      base.hq.y,
+      25,
+      25,
+      "worker",
+      base.seed,
+      w.role
+    )
+  );
+}
+
+
   private update(timestamp: number, dt: number) {
 	  
     if (this.phase !== "simulation") return;
@@ -152,6 +180,8 @@ for (let f of this.factions.factions) {
 	
     // HQ placeholder
     ctx.fillStyle = "#444";
+	this.goldNode.draw(ctx,this.cameraX,this.cameraY);
+	this.magicCrystal.draw(ctx,this.cameraX,this.cameraY);
 //ctx.fillRect(this.data.objects.hq.x - 25, this.data.objects.hq.y - 25, 50, 50);
 	for(let f of this.factions.factions)f.drawEverything(ctx,this.cameraX,this.cameraY);
     ctx.fillStyle = "#ddd";
@@ -189,13 +219,13 @@ for (let f of this.factions.factions) {
       const pct = Math.min(1, elapsed / this.SIMULATION_DURATION);
 
       ctx.fillStyle = "#333";
-      ctx.fillRect(20, 400, 760, 20);
+      ctx.fillRect(20, 570, 760, 20);
 
       ctx.fillStyle = "#44ff66";
-      ctx.fillRect(20, 400, 760 * pct, 20);
+      ctx.fillRect(20, 570, 760 * pct, 20);
 
       ctx.fillStyle = "#ffffff";
-      ctx.fillText(`${Math.floor(elapsed / 1000)}s / 30s`, 360, 395);
+      ctx.fillText(`${Math.floor(elapsed / 1000)}s / 30s`, 360, 565);
     }
   }
 }
