@@ -87,57 +87,71 @@ export class Worker extends GraphicObject{
 		const wood=this.data.objects.wood;
 		const fruits=this.data.objects.fruits;
 		const clay=this.data.objects.clay;
-		switch(phase){
-			case "hq":
-			this.moveToAnchor(hq.x,hq.y,dt);
-			break;
-			case"gather":
-				switch(this.role){
-					case "woodcutter":
-					this.moveToAnchor(wood.x,wood.y,dt);
+		if(this.role==="ranged"||this.role==="warrior"){
+			if(phase==="hq"||phase==="building")this.moveToAnchor(hq.x,hq.y,dt);
+			else{
+				this.moveToAnchor(336,300,dt);
+			}
+			 return;  // ← ← ← KLUCZOWE !!!
+		}else{
+				switch(phase){
+					case "hq":
+					this.moveToAnchor(hq.x,hq.y,dt);
 					break;
-					case "miner":
-					this.moveToAnchor(stone.x,stone.y,dt);
-					break;
-					case "gatherer":
-					this.moveToAnchor(fruits.x,fruits.y,dt);
-					break;
-					case"clayPicker":
-					this.moveToAnchor(clay.x,clay.y,dt);
-					break;
-				}
+					case"gather":
+						switch(this.role){
+							case "woodcutter":
+							this.moveToAnchor(wood.x,wood.y,dt);
+							break;
+							case "miner":
+							this.moveToAnchor(stone.x,stone.y,dt);
+							break;
+							case "gatherer":
+							this.moveToAnchor(fruits.x,fruits.y,dt);
+							break;
+							case"clayPicker":
+							this.moveToAnchor(clay.x,clay.y,dt);
+							break;
+						}
+					
+					break;	
 			
-			break;	
-				case"building":
-				switch(building.name){
-				case"farm":
-				this.moveToAnchor(hq.x+30,hq.y,dt);
-			
-				break;
-				case"hunterHut":
-				this.moveToAnchor(hq.x+30,hq.y-20,dt);
-				
-				break;
-				case"carpentry":
-				this.moveToAnchor(hq.x+30,hq.y+20,dt);
-				
-				break;
-				case"masonry":
-				this.moveToAnchor(hq.x-30,hq.y,dt);
-				
-				break;
-				case"pottery":
-				this.moveToAnchor(hq.x-30,hq.y-20,dt);
-				
-				break;
-				case"house":
-				this.moveToAnchor(hq.x-30,hq.y+20,dt);
+						case"building":
+						switch(building.name){
+						case"farm":
+						this.moveToAnchor(hq.x+30,hq.y,dt);
+					
+						break;
+						case"hunterHut":
+						this.moveToAnchor(hq.x+30,hq.y+20,dt);
+						
+						break;
+						case"carpentry":
+						this.moveToAnchor(hq.x+30,hq.y-20,dt);
+						
+						break;
+						case"masonry":
+						this.moveToAnchor(hq.x-30,hq.y,dt);
+						
+						break;
+						case"pottery":
+						this.moveToAnchor(hq.x-30,hq.y+30,dt);
+						
+						break;
+						case"barracks":
+						this.moveToAnchor(hq.x-30,hq.y-30,dt);
 
-				break;
+						break;
+						
+						case"house":
+						this.moveToAnchor(hq.x+30,hq.y,dt);
+
+						break;
+						}
+					break;
 				}
-			break;
+				 return;  // ← ← ← KLUCZOWE !!!
 		}
-		
 	}
 	
 }
