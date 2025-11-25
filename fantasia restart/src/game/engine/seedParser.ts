@@ -1,10 +1,10 @@
 // typ pojedynczego punktu na mapie
-type SeedObject = {
+export type SeedObject = {
   name: string;
   x: number;
   y: number;
 };
-type SeedParseResult = {
+export type SeedParseResult = {
   objects: SeedObject[];
   layout: "left" | "right";
 };
@@ -16,11 +16,11 @@ export function seedParser(seed: string): SeedObject[] {
   // seed[5] – miejsce HQ (6. znak seeda)
   switch (seed[5]) {
     case "1":
-      baseCoords.x = 300;
-      baseCoords.y = 0;
+      baseCoords.x = 350;
+      baseCoords.y = 100;
       break;
     case "2":
-      baseCoords.x = 500;
+      baseCoords.x = 550;
       baseCoords.y = 400;
       break;
     case "3":
@@ -29,7 +29,7 @@ export function seedParser(seed: string): SeedObject[] {
       break;
     default:
       // fallback, gdyby seed był krótszy / zły
-      baseCoords.x = 300;
+      baseCoords.x = 400;
       baseCoords.y = 200;
       break;
   }
@@ -40,11 +40,18 @@ export function seedParser(seed: string): SeedObject[] {
   const fruits: SeedObject = { name: "fruits", x: hq.x, y: hq.y };
   const clay: SeedObject = { name: "clay", x: hq.x, y: hq.y };
 
+ const farm: SeedObject = { name: "farm", x: hq.x+30, y: hq.y };
+ const hunterHut: SeedObject = { name: "hunterHut", x: hq.x+30, y: hq.y+30 };
+ const carpentry: SeedObject = { name: "carpentry", x: hq.x+30, y: hq.y-30 };
+ const masonry: SeedObject = { name: "masonry", x: hq.x-30, y: hq.y };
+  const pottery: SeedObject = { name: "pottery", x: hq.x-30, y: hq.y+30 };
+    const barracks: SeedObject = { name: "barracks", x: hq.x-30, y: hq.y-30 };
+	const house: SeedObject = { name: "house", x: hq.x+60, y: hq.y };
   // wood – seed[0]
   switch (seed[0]) {
     case "1":
       wood.x = hq.x;
-      wood.y = hq.y - 50;
+      wood.y = hq.y - 60;
       break;
     case "2":
       wood.x = hq.x + 100;
@@ -52,7 +59,7 @@ export function seedParser(seed: string): SeedObject[] {
       break;
     case "3":
       wood.x = hq.x;
-      wood.y = hq.y + 50;
+      wood.y = hq.y + 60;
       break;
   }
 
@@ -60,15 +67,15 @@ export function seedParser(seed: string): SeedObject[] {
   switch (seed[1]) {
     case "1":
       stone.x = hq.x + 10;
-      stone.y = hq.y - 50;
+      stone.y = hq.y - 60;
       break;
     case "2":
       stone.x = hq.x + 100;
-      stone.y = hq.y - 10;
+      stone.y = hq.y - 20;
       break;
     case "3":
       stone.x = hq.x + 10;
-      stone.y = hq.y + 50;
+      stone.y = hq.y + 60;
       break;
   }
 
@@ -76,15 +83,15 @@ export function seedParser(seed: string): SeedObject[] {
   switch (seed[2]) {
     case "1":
       fruits.x = hq.x + 20;
-      fruits.y = hq.y - 50;
+      fruits.y = hq.y - 60;
       break;
     case "2":
       fruits.x = hq.x + 100;
-      fruits.y = hq.y - 20;
+      fruits.y = hq.y - 30;
       break;
     case "3":
       fruits.x = hq.x + 20;
-      fruits.y = hq.y + 50;
+      fruits.y = hq.y + 60;
       break;
   }
 
@@ -92,21 +99,21 @@ export function seedParser(seed: string): SeedObject[] {
   switch (seed[3]) {
     case "1":
       clay.x = hq.x + 30;
-      clay.y = hq.y - 50;
+      clay.y = hq.y - 60;
       break;
     case "2":
       clay.x = hq.x + 100;
-      clay.y = hq.y - 30;
+      clay.y = hq.y - 40;
       break;
     case "3":
       clay.x = hq.x + 30;
-      clay.y = hq.y + 50;
+      clay.y = hq.y + 60;
       break;
   }
 
     return {
     objects: {hq, wood, stone, fruits, clay},
+	buildings: {farm, hunterHut, carpentry, masonry, pottery,house,barracks},
     layout,
   };
 }
-
