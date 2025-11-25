@@ -13,7 +13,9 @@ export type WorkerRole =
   | "miner"
   | "gatherer"
   | "clayPicker"
-  | "peasant";
+  | "peasant"
+  | "warrior"
+  | "ranged";
 
 export interface Resources {
   wood: number;
@@ -28,7 +30,8 @@ export type BuildingType =
   | "carpentry"
   | "masonry"
   | "pottery"
-  | "house";
+  | "house"
+  | "barracks";
 
 export type BuildStatus = "planned" | "building" | "finished";
 
@@ -85,6 +88,7 @@ export const BUILDING_COSTS: Record<BuildingType, Resources> = {
   masonry: createResources(5, 5, 0, 0),
   pottery: createResources(4, 3, 0, 0),
   house: createResources(4, 2, 0, 0), // przykładowy koszt domku, możesz zmienić
+  barracks: createResources(10, 10, 10, 10), // przykładowy koszt domku, możesz zmienić
 };
 
 // Stan początkowy (2 woodcutter, 1 miner, 5 gatherer, 3 peasant itd.):contentReference[oaicite:1]{index=1}
